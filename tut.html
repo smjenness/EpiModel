@@ -26,6 +26,7 @@
 			<a class="brand" href=index.html>EpiModel</a>
 			<div class="nav-collapse collapse">
 				<ul class="nav">
+				  <li><a href=team.html>Team</a></li>
           <li class="active"><a style="color: #FDD262" href=tut.html>Tutorials</a></li>
           <li><a href=ws.html>Workshops</a></li>
           <li><a href=det.html>Details</a></li>
@@ -45,11 +46,17 @@
   		<div id="Tutorials">
   		  <p>
   		  For each of the three model classes in EpiModel (deterministic compartmental
-        models; individual contact models, and network models) the tutorials are
+        models, individual contact models, and network models) the tutorials are
         organized into basic "built-in" models to guide new users in the features
         of the model class, and advanced extension models to build out the models
         to address new research questions.
         </p>
+        
+        <p>
+        Before diving into any tutorials, we recommend starting with our main methods paper published 
+        in the <strong>Journal of Statistical Software</strong>. It is available at
+        <a href="http://doi.org/10.18637/jss.v084.i08" target="_blank">http://doi.org/10.18637/jss.v084.i08</a>.
+  		  </p>
 
         <p>
         In <strong>July 2020</strong>, we have consolidated all of the tutorial
@@ -57,7 +64,7 @@
         <a href="https://statnet.org/nme/">Network Modeling for Epidemics</a>
         course. This also coincided with the release of <strong>EpiModel 2.0</strong>, a major
         update to the software package that improves the functionality of EpiModel
-        but may require some some updating of code (see the migration section below).
+        but may require some updating of code (see the migration section below).
   		  </p>
 
 
@@ -103,7 +110,7 @@
           deterministic compartmental models in EpiModel involves writing new
           model functions defining the mathematical transition processes, and then
           parameterizing and simulating those models. This tutorial shows examples
-          of how to write model functions, including new parameters, and run new
+          of how to write model functions, include new parameters, and run new
           models.
           <br>
           <small>
@@ -131,7 +138,7 @@
           many elements of the EpiModel infrastructure and application programming
 				  interface (API). We anticipate that there will be some minor backwards
 				  incompatibilities with any EpiModel code developed with versions 1.x. We
-				  have therefore prepare an <a href="http://statnet.github.io/tut/EpiModel2.html">
+				  have therefore prepared an <a href="http://statnet.github.io/tut/EpiModel2.html">
 				  EpiModel 2.0 Migration Guide</a> to outline these changes and assist users in
 				  transitioning.
         </p>
