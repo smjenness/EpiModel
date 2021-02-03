@@ -20,13 +20,14 @@ departures.net <- function(dat, at) {
     return(dat)
   }
 
-  type <- get_control(dat, "type")
+  type <- get_control(dat, "type", override.null.error = TRUE)
   active <- get_attr(dat, "active")
   status <- get_attr(dat, "status")
   exitTime <- get_attr(dat, "exitTime")
   rates.sus <- get_param(dat, "ds.rate")
   rates.inf <- get_param(dat, "di.rate")
-  if (type == "SIR") {
+  recov.flag <- get_init(dat, "r.num", override.null.error = TRUE)
+  if (!is.null(recov.flag)) {
     rates.rec <- get_param(dat, "dr.rate")
   }
 
@@ -58,8 +59,8 @@ departures.net <- function(dat, at) {
     }
   }
 
-  # Recovered departures ----------------------------------------------------
-  if (type == "SIR") {
+  # Recovered departures --------------------------------------------------------
+  if (!is.null(recov.flag)) {
     nDepartures.rec <- 0
     idsElig.rec <- which(active == 1 & status == "r")
     nElig.rec <- length(idsElig.rec)
@@ -81,7 +82,7 @@ departures.net <- function(dat, at) {
 
   dat <- set_epi(dat, "ds.flow", at, nDepartures.sus)
   dat <- set_epi(dat, "di.flow", at, nDepartures.inf)
-  if (type == "SIR") {
+  if (!is.null(recov.flag)) {
     dat <- set_epi(dat, "dr.flow", at, nDepartures.rec)
   }
   return(dat)
@@ -165,7 +166,8 @@ departures.2g.net <- function(dat, at) {
   group <- get_attr(dat, "group")
   rates.sus <- c(get_param(dat, "ds.rate"), get_param(dat, "ds.rate.g2"))
   rates.inf <- c(get_param(dat, "di.rate"), get_param(dat, "di.rate.g2"))
-  if (type == "SIR") {
+  recov.flag <- get_init(dat, "r.num", override.null.error = TRUE)
+  if (!is.null(recov.flag)) {
     rates.rec <- c(get_param(dat, "dr.rate"), get_param(dat, "dr.rate.g2"))
   }
 
@@ -203,8 +205,8 @@ departures.2g.net <- function(dat, at) {
     }
   }
 
-  # Recovered departures ----------------------------------------------------
-  if (type == "SIR") {
+  # Recovered departures --------------------------------------------------------
+  if (!is.null(recov.flag)) {
     nDepartures.rec <- nDeparturesG2.rec <- 0
     idsElig.rec <- which(active == 1 & status == "r")
     nElig.rec <- length(idsElig.rec)
@@ -228,14 +230,14 @@ departures.2g.net <- function(dat, at) {
 
   dat <- set_epi(dat, "ds.flow", at, nDepartures.sus)
   dat <- set_epi(dat, "di.flow", at, nDepartures.inf)
-  if (type == "SIR") {
-    dat <- set_epi(dat, "dr.flow", at, nDepartures.rec)
-  }
   dat <- set_epi(dat, "ds.flow.g2", at, nDeparturesG2.sus)
   dat <- set_epi(dat, "di.flow.g2", at, nDeparturesG2.inf)
   if (type == "SIR") {
+    dat <- set_epi(dat, "dr.flow", at, nDepartures.rec)
     dat <- set_epi(dat, "dr.flow.g2", at, nDeparturesG2.rec)
   }
+
+
   return(dat)
 }
 
