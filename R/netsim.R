@@ -148,10 +148,11 @@ netsim <- function(x, param, init, control) {
     cluster.type <- if (!is.null(control$cluster.type)) control$cluster.type
                     else "PSOCK"
     cl <- parallel::makeCluster(ncores, type = cluster.type)
-    sout <- parallel::parLapply(cl, seq_len(control$nsims), function(s) {
+    doParallel::registerDoParallel(cl)
+    sout <- foreach(s = 1:nsims) %dopar% {
       # Run the simulation
       netsim_loop(x, param, init, control, s)
-    })
+    }
     parallel::stopCluster(cl)
   }
 

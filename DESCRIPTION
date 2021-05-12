@@ -43,6 +43,8 @@ Imports:
     stats,
     utils,
     parallel,
+    doParallel,
+    foreach,
     ergm (>= 3.10),
     network (>= 1.13),
     RColorBrewer,

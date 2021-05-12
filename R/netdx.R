@@ -112,6 +112,7 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
   if (nsims > 1 && ncores > 1) {
     cluster.size <- min(nsims, ncores)
     cl <- parallel::makeCluster(cluster.size, type = cluster.type)
+    registerDoParallel(cl)
   }
 
   fit <- x$fit
@@ -180,7 +181,7 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
         cat("|")
       }
     } else {
-      diag.sim <- parallel::parLapply(cl, seq_len(nsims), function(i) {
+      diag.sim <- foreach(i = 1:nsims) %dopar% {
         simulate(
           fit,
           time.slices = nsteps,
@@ -188,7 +189,7 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           nsim = 1,
           control = set.control.stergm
         )
-      })
+      }
     }
   }
 
@@ -228,7 +229,7 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           cat("|")
         }
       } else {
-        diag.sim <- parallel::parLapply(cl, seq_len(nsims), function(i) {
+        diag.sim <- foreach(i = 1:nsims) %dopar% {
           fit.sim <- simulate(
             fit,
             basis = fit$newnetwork,
@@ -246,7 +247,7 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
             nsim = 1,
             control = set.control.stergm
           )
-        })
+        }
       }
     }
     if (dynamic == FALSE) {
@@ -352,9 +353,9 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           cat("|")
         }
       } else {
-        pages <- parallel::parLapply(cl, seq_len(nsims), function(i) {
+        pages <- foreach(i = 1:nsims) %dopar% {
           edgelist_meanage(el = sim.df[[i]])
-        })
+        }
       }
 
       pages_imptd <- (x$coef.diss$duration^2*dgeom(2:(nsteps + 1),
@@ -384,13 +385,12 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           cat("|")
         }
       } else {
-        prop.diss <- parallel::parLapply(cl, seq_len(nsims), function(i) {
-          sapply( seq_len(nsteps), function(x) {
-            sum(sim.df[[i]]$terminus == x) /
-              sum(sim.df[[i]]$onset < x &
-                sim.df[[i]]$terminus >= x)
+        prop.diss <- foreach(i = 1:nsims) %dopar% {
+          sapply(1:nsteps, function(x) {
+            sum(sim.df[[i]]$terminus == x) / sum(sim.df[[i]]$onset < x &
+              sim.df[[i]]$terminus >= x)
           })
-        })
+        }
       }
 
       if (verbose == TRUE) {
