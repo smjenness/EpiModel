@@ -27,8 +27,10 @@
 #'        from the dynamic simulations. Returned in the form of a list of nD
 #'        objects, with one entry per simulation. Accessible at \code{$network}.
 #' @param verbose Print progress to the console.
-#' @param ncores Number of processor cores to run multiple simulations
-#'        on, using the \code{foreach} and \code{doParallel} implementations.
+#' @param ncores Number of processor cores to run multiple simulations on
+#' @param cluster.type Type of cluster to run multiple simulations on. This
+#'        value is passed to \code{parallel::makeCluster} \code{type} argument
+#'        (default = "PSOCK")
 #' @param skip.dissolution If \code{TRUE}, skip over the calculations of
 #'        duration and dissolution stats in netdx.
 #'
@@ -100,13 +102,17 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
                   nwstats.formula = "formation", set.control.ergm,
                   set.control.stergm, sequential = TRUE, keep.tedgelist = FALSE,
                   keep.tnetwork = FALSE, verbose = TRUE, ncores = 1,
-                  skip.dissolution = FALSE) {
+                  cluster.type = "PSOCK", skip.dissolution = FALSE) {
 
   if (class(x) != "netest") {
     stop("x must be an object of class netest", call. = FALSE)
   }
 
   ncores <- ifelse(nsims == 1, 1, min(parallel::detectCores(), ncores))
+  if (nsims > 1 && ncores > 1) {
+    cluster.size <- min(nsims, ncores)
+    cl <- parallel::makeCluster(cluster.size, type = cluster.type)
+  }
 
   fit <- x$fit
   formation <- x$formation
@@ -160,7 +166,7 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
       if (verbose == TRUE & nsims > 1) {
         cat("\n  |")
       }
-      for (i in 1:nsims) {
+      for (i in seq_len(nsims)) {
         diag.sim[[i]] <- simulate(fit,
                                   time.slices = nsteps,
                                   monitor = nwstats.formula,
@@ -174,16 +180,15 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
         cat("|")
       }
     } else {
-      cluster.size <- min(nsims, ncores)
-      registerDoParallel(cluster.size)
-
-      diag.sim <- foreach(i = 1:nsims) %dopar% {
-        simulate(fit,
-                 time.slices = nsteps,
-                 monitor = nwstats.formula,
-                 nsim = 1,
-                 control = set.control.stergm)
-      }
+      diag.sim <- parallel::parLapply(cl, seq_len(nsims), function(i) {
+        simulate(
+          fit,
+          time.slices = nsteps,
+          monitor = nwstats.formula,
+          nsim = 1,
+          control = set.control.stergm
+        )
+      })
     }
   }
 
@@ -223,23 +228,25 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           cat("|")
         }
       } else {
-        cluster.size <- min(nsims, ncores)
-        registerDoParallel(cluster.size)
-
-        diag.sim <- foreach(i = 1:nsims) %dopar% {
-          fit.sim <- simulate(fit, basis = fit$newnetwork,
-                              control = set.control.ergm)
-          simulate(fit.sim,
-                   formation = formation,
-                   dissolution = dissolution,
-                   coef.form = coef.form,
-                   coef.diss = coef.diss$coef.crude,
-                   time.slices = nsteps,
-                   constraints = constraints,
-                   monitor = nwstats.formula,
-                   nsim = 1,
-                   control = set.control.stergm)
-        }
+        diag.sim <- parallel::parLapply(cl, seq_len(nsims), function(i) {
+          fit.sim <- simulate(
+            fit,
+            basis = fit$newnetwork,
+            control = set.control.ergm
+          )
+          simulate(
+            fit.sim,
+            formation = formation,
+            dissolution = dissolution,
+            coef.form = coef.form,
+            coef.diss = coef.diss$coef.crude,
+            time.slices = nsteps,
+            constraints = constraints,
+            monitor = nwstats.formula,
+            nsim = 1,
+            control = set.control.stergm
+          )
+        })
       }
     }
     if (dynamic == FALSE) {
@@ -345,12 +352,9 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           cat("|")
         }
       } else {
-        cluster.size <- min(nsims, ncores)
-        registerDoParallel(cluster.size)
-
-        pages <- foreach(i = 1:nsims) %dopar% {
+        pages <- parallel::parLapply(cl, seq_len(nsims), function(i) {
           edgelist_meanage(el = sim.df[[i]])
-        }
+        })
       }
 
       pages_imptd <- (x$coef.diss$duration^2*dgeom(2:(nsteps + 1),
@@ -380,18 +384,21 @@ netdx <- function(x, nsims = 1, dynamic = TRUE, nsteps,
           cat("|")
         }
       } else {
-        cluster.size <- min(nsims, ncores)
-        registerDoParallel(cluster.size)
-
-        prop.diss <- foreach(i = 1:nsims) %dopar% {
-          sapply(1:nsteps, function(x) sum(sim.df[[i]]$terminus == x) /
-                   sum(sim.df[[i]]$onset < x &
-                         sim.df[[i]]$terminus >= x))
-        }
+        prop.diss <- parallel::parLapply(cl, seq_len(nsims), function(i) {
+          sapply( seq_len(nsteps), function(x) {
+            sum(sim.df[[i]]$terminus == x) /
+              sum(sim.df[[i]]$onset < x &
+                sim.df[[i]]$terminus >= x)
+          })
+        })
       }
 
       if (verbose == TRUE) {
         cat("\n ")
+      }
+
+      if (nsims > 1 && ncores > 1) {
+        parallel::stopCluster(cl)
       }
 
 
