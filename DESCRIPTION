@@ -35,7 +35,6 @@ Depends:
     deSolve (>= 1.21),
     networkDynamic (>= 0.10),
     tergm (>= 4.0),
-    tergmLite (>= 2.5.0),
     statnet.common (>= 4.4.0)
 Imports:
     graphics,
@@ -49,7 +48,9 @@ Imports:
     RColorBrewer,
     ape,
     lazyeval,
-    ggplot2
+    ggplot2,
+    tibble,
+    methods
 Suggests:
     knitr,
     ndtv,
@@ -57,7 +58,6 @@ Suggests:
     shiny,
     testthat
 VignetteBuilder: knitr
-LinkingTo: ergm
+LinkingTo: Rcpp, ergm
 RoxygenNote: 7.1.1
 Encoding: UTF-8
-Remotes: github::statnet/tergmLite@top_level_simulate
