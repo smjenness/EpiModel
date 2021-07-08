@@ -316,6 +316,7 @@ print.param.net <- function(x, ...) {
     pToPrint <- pToPrint[! names(x)[pToPrint] %in% names(rng_values)]
   } else if (randoms[1] %in% names(x)) {
     rng_defs <- names(x[[randoms[1]]])
+    pToPrint <- pToPrint[! names(x)[pToPrint] %in% rng_defs]
   }
 
   cat("Fixed Parameters")
@@ -329,7 +330,7 @@ print.param.net <- function(x, ...) {
     cat("\n(Not drawn yet)")
     cat("\n---------------------------\n")
     for (prm in rng_defs) {
-      cat(prm, " = <function>\n")
+      cat(prm, "= <function>\n")
     }
   }
 
